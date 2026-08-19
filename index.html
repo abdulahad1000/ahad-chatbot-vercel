@@ -34,8 +34,6 @@
   }
   button:disabled { opacity: 0.5; cursor: default; }
   #reply { margin-top: 28px; font-size: 16px; line-height: 1.7; white-space: pre-wrap; }
-  #memories { margin-top: 22px; font-size: 13px; color: #666; }
-  #memories div { margin-bottom: 6px; }
   .err { color: #b00; }
 </style>
 </head>
@@ -48,7 +46,6 @@
 <button id="send">Send</button>
 
 <div id="reply"></div>
-<div id="memories"></div>
 
 <script>
   // A fresh session ID per page load. Reload the page to start a new session.
@@ -57,7 +54,6 @@
   const input = document.getElementById("msg");
   const button = document.getElementById("send");
   const reply = document.getElementById("reply");
-  const memories = document.getElementById("memories");
 
   async function send() {
     const message = input.value.trim();
@@ -66,7 +62,6 @@
     button.disabled = true;
     reply.className = "";
     reply.textContent = "Thinking...";
-    memories.textContent = "";
 
     try {
       const res = await fetch("/api/chat", {
@@ -81,18 +76,6 @@
         reply.textContent = data.error;
       } else {
         reply.textContent = data.reply;
-        if (data.memories && data.memories.length) {
-          memories.innerHTML =
-            "<div>Retrieved " + data.memories.length + " memories:</div>" +
-            data.memories.map(m =>
-              "<div>&middot; [" + m.session_id + "] " + m.content +
-              " &mdash; recency " + m.recency +
-              ", relevance " + m.relevance +
-              ", composite " + m.composite + "</div>"
-            ).join("");
-        } else {
-          memories.textContent = "No memories from other sessions yet.";
-        }
       }
     } catch (e) {
       reply.className = "err";
