@@ -14,6 +14,7 @@ min-max scaled, summed into a composite, ranked descending.
 import json
 import math
 import os
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
@@ -134,8 +135,11 @@ def embed(text):
         },
     )
 
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        payload = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            payload = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Gemini {e.code}: {e.read().decode()[:400]}")
 
     vector = payload["embedding"]["values"]
 
@@ -246,8 +250,11 @@ def generate_reply(user_message, memories):
         },
     )
 
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        payload = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            payload = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Groq {e.code}: {e.read().decode()[:400]}")
 
     return payload["choices"][0]["message"]["content"].strip()
 
