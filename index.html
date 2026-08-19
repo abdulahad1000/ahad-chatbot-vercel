@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AHAD Chatbot</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    max-width: 720px;
+    margin: 60px auto;
+    padding: 0 24px;
+    color: #1a1a1a;
+  }
+  h1 { font-size: 34px; margin-bottom: 28px; }
+  label { display: block; font-size: 14px; margin-bottom: 6px; }
+  input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #f4f4f6;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 14px;
+    padding: 9px 22px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #reply { margin-top: 28px; font-size: 16px; line-height: 1.7; white-space: pre-wrap; }
+  #memories { margin-top: 22px; font-size: 13px; color: #666; }
+  #memories div { margin-bottom: 6px; }
+  .err { color: #b00; }
+</style>
+</head>
+<body>
+
+<h1>AHAD Chatbot</h1>
+
+<label for="msg">Message</label>
+<input id="msg" autocomplete="off">
+<button id="send">Send</button>
+
+<div id="reply"></div>
+<div id="memories"></div>
+
+<script>
+  // A fresh session ID per page load. Reload the page to start a new session.
+  const sessionId = "session_" + Math.random().toString(16).slice(2, 10);
+
+  const input = document.getElementById("msg");
+  const button = document.getElementById("send");
+  const reply = document.getElementById("reply");
+  const memories = document.getElementById("memories");
+
+  async function send() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    button.disabled = true;
+    reply.className = "";
+    reply.textContent = "Thinking...";
+    memories.textContent = "";
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, session_id: sessionId })
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        reply.className = "err";
+        reply.textContent = data.error;
+      } else {
+        reply.textContent = data.reply;
+        if (data.memories && data.memories.length) {
+          memories.innerHTML =
+            "<div>Retrieved " + data.memories.length + " memories:</div>" +
+            data.memories.map(m =>
+              "<div>&middot; [" + m.session_id + "] " + m.content +
+              " &mdash; recency " + m.recency +
+              ", relevance " + m.relevance +
+              ", composite " + m.composite + "</div>"
+            ).join("");
+        } else {
+          memories.textContent = "No memories from other sessions yet.";
+        }
+      }
+    } catch (e) {
+      reply.className = "err";
+      reply.textContent = "Request failed: " + e.message;
+    }
+
+    button.disabled = false;
+  }
+
+  button.addEventListener("click", send);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+</script>
+
+</body>
+</html>
