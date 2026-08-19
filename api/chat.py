@@ -132,7 +132,6 @@ def embed(text):
         headers={
             "Content-Type": "application/json",
             "x-goog-api-key": GEMINI_API_KEY,
-            "User-Agent": "ahad-chatbot/1.0",
         },
     )
 
@@ -248,8 +247,6 @@ def generate_reply(user_message, memories):
         headers={
             "Content-Type": "application/json",
             "Authorization": f"Bearer {GROQ_API_KEY}",
-            # Cloudflare blocks the default urllib agent with error 1010.
-            "User-Agent": "ahad-chatbot/1.0",
         },
     )
 
